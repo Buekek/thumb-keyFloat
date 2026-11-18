@@ -122,6 +122,24 @@ class IMEService :
         }
     }
 
+    // Keep the host app full-size and touchable while the keyboard itself is
+    // rendered in a separate, non-touch-modal WindowManager overlay.
+    override fun onEvaluateFullscreenMode(): Boolean =
+        if (isFloatingKeyboardEnabled(this)) false else super.onEvaluateFullscreenMode()
+
+    override fun onComputeInsets(outInsets: Insets) {
+        super.onComputeInsets(outInsets)
+        if (floatingOverlay != null) {
+            // The placeholder IME input view must not resize the host app or
+            // intercept taps. The floating overlay handles key/drag touches.
+            val bottom = window?.window?.decorView?.height ?: 0
+            outInsets.contentTopInsets = bottom
+            outInsets.visibleTopInsets = bottom
+            outInsets.touchableInsets = Insets.TOUCHABLE_INSETS_REGION
+            outInsets.touchableRegion.setEmpty()
+        }
+    }
+
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
         showFloatingKeyboard()

@@ -29,7 +29,8 @@ internal class FloatingKeyboardOverlay(
     private val density = display.density
     private fun dp(value: Int) = (value * density).roundToInt()
 
-    private val windowWidth = minOf(display.widthPixels - dp(24), dp(420)).coerceAtLeast(dp(180))
+    // Keep just 4 dp of outer space per side on phones, instead of 12 dp.
+    private val windowWidth = minOf(display.widthPixels - dp(8), dp(420)).coerceAtLeast(dp(180))
     val widthDp: Int = (windowWidth / density).roundToInt()
 
     private val preferences = ime.getSharedPreferences("floating_keyboard", Context.MODE_PRIVATE)

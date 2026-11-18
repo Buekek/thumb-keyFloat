@@ -199,7 +199,12 @@ fun KeyboardScreen(
                 ?: DEFAULT_POSITION,
         ]
 
-    val positionPadding = settings?.positionPadding ?: DEFAULT_POSITION_PADDING
+    // The floating window can be dragged, so preserve only a minimal inset
+    // instead of applying the normal anchored-keyboard position padding.
+    val positionPadding =
+        (settings?.positionPadding ?: DEFAULT_POSITION_PADDING).let { padding ->
+            if (ctx.floatingKeyboardWidthDp != null) padding.coerceIn(-4, 4) else padding
+        }
 
     val pushupSizeDp = (settings?.pushupSize ?: DEFAULT_PUSHUP_SIZE).dp
     val ignoreBottomPadding = (settings?.ignoreBottomPadding ?: DEFAULT_IGNORE_BOTTOM_PADDING).toBool()
@@ -227,7 +232,7 @@ fun KeyboardScreen(
     val floatingMaxKeyWidth = ctx.floatingKeyboardWidthDp?.let { width ->
         val columns = keyboardDefinition.modes.main.arr.maxOfOrNull { it.size } ?: 3
         val sections = if (position == KeyboardPosition.Dual) 2 else 1
-        ((width - 12) / (columns.coerceAtLeast(1) * sections)).coerceAtLeast(10)
+        ((width - 4) / (columns.coerceAtLeast(1) * sections)).coerceAtLeast(10)
     }
     val legendWidth =
         if (autoSizeKeys) {
