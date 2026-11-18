@@ -13,6 +13,9 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.lifecycle.setViewTreeLifecycleOwner
+import androidx.lifecycle.setViewTreeViewModelStoreOwner
+import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.dessalines.thumbkey.utils.TAG
 import kotlin.math.roundToInt
 
@@ -59,6 +62,12 @@ internal class FloatingKeyboardOverlay(
     private var added = false
 
     init {
+        // A WindowManager overlay is an independent window, not a child of the IME's
+        // decor view. Compose's WindowRecomposer looks for owners on the window root.
+        root.setViewTreeLifecycleOwner(ime)
+        root.setViewTreeViewModelStoreOwner(ime)
+        root.setViewTreeSavedStateRegistryOwner(ime)
+
         val handle = TextView(ime).apply {
             text = ime.getString(R.string.floating_keyboard_drag_handle)
             contentDescription = ime.getString(R.string.floating_keyboard_drag_handle)
@@ -119,13 +128,21 @@ internal class FloatingKeyboardOverlay(
             Log.w(TAG, "Could not show floating keyboard", e)
         } catch (e: SecurityException) {
             Log.w(TAG, "Overlay permission was revoked", e)
+        } catch (e: IllegalArgumentException) {
+            Log.w(TAG, "Floating keyboard window rejected", e)
+        } catch (e: IllegalStateException) {
+            Log.w(TAG, "Floating keyboard could not attach", e)
         }
         return false
     }
 
     fun dismiss() {
         if (!added) return
-        windowManager.removeViewImmediate(root)
         added = false
+        try {
+            windowManager.removeViewImmediate(root)
+        } catch (e: IllegalArgumentException) {
+            Log.w(TAG, "Floating keyboard overlay was already removed", e)
+        }
     }
 }
