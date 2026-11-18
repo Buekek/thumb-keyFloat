@@ -28,7 +28,11 @@ jobs:
       - name: Install Android API 37
         run: |
           echo "SDK: $ANDROID_HOME"
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-37' 'platform-tools'
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-37.0' 'platform-tools'
+          # AGP may still resolve compileSdk=37 as android-37 rather than android-37.0.
+          if [ -d "$ANDROID_HOME/platforms/android-37.0" ] && [ ! -e "$ANDROID_HOME/platforms/android-37" ]; then
+            ln -s "$ANDROID_HOME/platforms/android-37.0" "$ANDROID_HOME/platforms/android-37"
+          fi
 
       - name: Compile debug APK
         run: |
