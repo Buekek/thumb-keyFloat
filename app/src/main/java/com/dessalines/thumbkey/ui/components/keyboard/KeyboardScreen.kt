@@ -224,13 +224,18 @@ fun KeyboardScreen(
     val keyPadding = settings?.keyPadding ?: DEFAULT_KEY_PADDING
     val autoSizeKeys = (settings?.autoSizeKeys ?: DEFAULT_AUTO_SIZE_KEYS).toBool()
     val nonSquareKeys = (settings?.nonSquareKeys ?: DEFAULT_NON_SQUARE_KEYS).toBool()
+    val floatingMaxKeyWidth = ctx.floatingKeyboardWidthDp?.let { width ->
+        val columns = keyboardDefinition.modes.main.arr.maxOfOrNull { it.size } ?: 3
+        val sections = if (position == KeyboardPosition.Dual) 2 else 1
+        ((width - 12) / (columns.coerceAtLeast(1) * sections)).coerceAtLeast(10)
+    }
     val legendWidth =
         if (autoSizeKeys) {
             val keyboardLayout = settings?.keyboardLayout ?: DEFAULT_KEYBOARD_LAYOUT
             getAutoKeyWidth(keyboardLayout, keyPadding, position, ctx)
         } else {
             settings?.keyWidth ?: DEFAULT_KEY_WIDTH
-        }
+        }.let { width -> floatingMaxKeyWidth?.let { minOf(width, it) } ?: width }
     val legendHeight =
         if (!nonSquareKeys) {
             legendWidth

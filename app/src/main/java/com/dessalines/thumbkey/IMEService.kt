@@ -2,6 +2,7 @@ package com.dessalines.thumbkey
 
 import android.inputmethodservice.InputMethodService
 import android.util.Log
+import android.view.View
 import android.view.inputmethod.CursorAnchorInfo
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
@@ -82,6 +83,8 @@ class IMEService :
     // Sketch mode's drawing, kept while the keyboard is closed and opened again
     val sketchState = SketchState()
     private var clipboardManager: ThumbKeyClipboardManager? = null
+    private var floatingOverlay: FloatingKeyboardOverlay? = null
+    val floatingKeyboardWidthDp: Int? get() = floatingOverlay?.widthDp
 
     /**
      * This is called every time the keyboard is brought up.
@@ -97,8 +100,36 @@ class IMEService :
         // its drawing
         sketchState.searching = false
         sketchState.list = null
+        floatingOverlay?.dismiss()
+        floatingOverlay = null
         val view = this.setupView()
-        this.setInputView(view)
+        if (isFloatingKeyboardEnabled(this)) {
+            floatingOverlay = FloatingKeyboardOverlay(this, view)
+            // Keep a zero-height input view so Android leaves the application unobstructed.
+            this.setInputView(View(this))
+        } else {
+            this.setInputView(view)
+        }
+    }
+
+    private fun showFloatingKeyboard() {
+        val overlay = floatingOverlay ?: return
+        if (!overlay.show()) {
+            overlay.dismiss()
+            floatingOverlay = null
+            // System permission might be revoked while the keyboard is running.
+            setInputView(setupView())
+        }
+    }
+
+    override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
+        super.onStartInputView(info, restarting)
+        showFloatingKeyboard()
+    }
+
+    override fun onWindowShown() {
+        super.onWindowShown()
+        showFloatingKeyboard()
     }
 
     // Lifecycle Methods
@@ -121,6 +152,8 @@ class IMEService :
     }
 
     override fun onDestroy() {
+        floatingOverlay?.dismiss()
+        floatingOverlay = null
         clipboardManager?.stopListening()
         clipboardManager = null
         super.onDestroy()
@@ -185,10 +218,16 @@ class IMEService :
     }
 
     override fun onFinishInputView(finishingInput: Boolean) {
+        floatingOverlay?.dismiss()
         // Must run before super, which commits any composing text as it stands.
         // Running after it would let the processor write its pending text a second time.
         currentKeyboardDefinition?.settings?.textProcessor?.handleFinishInput(this)
         super.onFinishInputView(finishingInput)
+    }
+
+    override fun onWindowHidden() {
+        floatingOverlay?.dismiss()
+        super.onWindowHidden()
     }
 
     private var ignoreCursorMove: Boolean = false

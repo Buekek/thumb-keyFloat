@@ -41,6 +41,9 @@
     <string name="theme">Theme</string>
     <string name="theme_color">Theme color</string>
     <string name="position">Position</string>
+    <string name="floating_keyboard">Floating keyboard</string>
+    <string name="floating_keyboard_description">Show a movable keyboard over other apps while typing. Requires Draw over other apps access.</string>
+    <string name="floating_keyboard_drag_handle">Drag to move Thumb-Key</string>
     <string name="position_padding">Position padding: %1$s</string>
     <string name="vibrate_on_tap">Vibrate on tap</string>
     <string name="vibrate_warning">Requires touch feedback to be enabled in system settings</string>

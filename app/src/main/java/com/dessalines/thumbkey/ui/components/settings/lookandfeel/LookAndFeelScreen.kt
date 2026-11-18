@@ -1,6 +1,11 @@
 package com.dessalines.thumbkey.ui.components.settings.lookandfeel
 
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.imePadding
@@ -38,14 +43,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.navigation.NavController
 import com.dessalines.thumbkey.R
+import com.dessalines.thumbkey.isFloatingKeyboardEnabled
+import com.dessalines.thumbkey.setFloatingKeyboardEnabled
 import com.dessalines.thumbkey.db.AppSettingsViewModel
 import com.dessalines.thumbkey.db.DEFAULT_ANIMATION_HELPER_SPEED
 import com.dessalines.thumbkey.db.DEFAULT_ANIMATION_SPEED
@@ -93,6 +102,13 @@ fun LookAndFeelScreen(
     appSettingsViewModel: AppSettingsViewModel,
 ) {
     Log.d(TAG, "Got to lookAndFeel activity")
+    val context = LocalContext.current
+    var floatingKeyboardState by remember { mutableStateOf(isFloatingKeyboardEnabled(context)) }
+    val overlayPermissionLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            floatingKeyboardState = Settings.canDrawOverlays(context)
+            setFloatingKeyboardEnabled(context, floatingKeyboardState)
+        }
 
     val resources = LocalResources.current
     val settings by appSettingsViewModel.appSettings.observeAsState()
@@ -190,6 +206,24 @@ fun LookAndFeelScreen(
                         .imePadding(),
             ) {
                 ProvidePreferenceTheme {
+                    SwitchPreference(
+                        value = floatingKeyboardState,
+                        onValueChange = { enabled ->
+                            if (!enabled || Settings.canDrawOverlays(context)) {
+                                floatingKeyboardState = enabled
+                                setFloatingKeyboardEnabled(context, enabled)
+                            } else {
+                                overlayPermissionLauncher.launch(
+                                    Intent(
+                                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                        Uri.parse("package:${context.packageName}"),
+                                    ),
+                                )
+                            }
+                        },
+                        title = { Text(stringResource(R.string.floating_keyboard)) },
+                        summary = { Text(stringResource(R.string.floating_keyboard_description)) },
+                    )
                     ListPreference(
                         type = ListPreferenceType.DROPDOWN_MENU,
                         value = themeState,
