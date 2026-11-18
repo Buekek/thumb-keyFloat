@@ -93,13 +93,16 @@ internal class FloatingKeyboardOverlay(
         root.setViewTreeSavedStateRegistryOwner(ime)
 
         val handle = TextView(ime).apply {
-            text = ime.getString(R.string.floating_keyboard_drag_handle)
+            // The full instruction is available to accessibility services.
+            // A compact grip prevents the header from setting a minimum width
+            // larger than a keyboard configured with small keys.
+            text = "⋮⋮"
             contentDescription = ime.getString(R.string.floating_keyboard_drag_handle)
             gravity = Gravity.CENTER
             setTextColor(Color.WHITE)
             setBackgroundColor(Color.rgb(66, 66, 66))
-            textSize = 13f
-            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(36))
+            textSize = 18f
+            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(30))
         }
         attachDragHandler(handle)
         root.addView(handle)
