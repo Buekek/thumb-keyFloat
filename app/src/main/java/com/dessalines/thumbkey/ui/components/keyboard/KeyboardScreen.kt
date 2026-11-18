@@ -931,6 +931,7 @@ fun KeyboardScreen(
             Log.d(TAG, "request for cursor updates failed, cursor updates will not be provided")
         }
 
+        val isFloating = ctx.floatingKeyboardWidthDp != null
         val drawKeyboard = @Composable { alignment: Alignment, drawBackdrop: Boolean, positionPadding: Int ->
             val modifierPositionPadding =
                 if (positionPadding > 0) {
@@ -943,18 +944,19 @@ fun KeyboardScreen(
                 modifier =
                     Modifier
                         .then(if (drawBackdrop) Modifier.background(backdropColor) else (Modifier))
-                        .then(if (!ignoreBottomPadding) Modifier.safeDrawingPadding() else Modifier)
-                        .padding(bottom = pushupSizeDp)
+                        .then(if (!ignoreBottomPadding && !isFloating) Modifier.safeDrawingPadding() else Modifier)
+                        .padding(bottom = if (isFloating) 0.dp else pushupSizeDp)
                         .then(
-                            if (backdropEnabled) {
+                            if (backdropEnabled && !isFloating) {
                                 Modifier.padding(top = backdropPadding)
                             } else {
                                 Modifier
                             },
                         ),
             ) {
-                // adds a pretty line if you're using the backdrop
-                if (drawBackdrop) {
+                // A fillMaxWidth decorative line would force a wrap-content
+                // floating window to expand to the full display width.
+                if (drawBackdrop && !isFloating) {
                     Box(
                         modifier =
                             Modifier
@@ -1158,9 +1160,19 @@ fun KeyboardScreen(
         }
 
         val drawKeyboards = @Composable {
-            drawKeyboard(keyboardPositionToAlignment(position), backdropEnabled, positionPadding)
-            if (position == KeyboardPosition.Dual) {
-                drawKeyboard(keyboardPositionToAlignment(KeyboardPosition.Right), false, positionPadding)
+            if (isFloating && position == KeyboardPosition.Dual) {
+                // Dual mode must contribute BOTH keyboard widths to the measured
+                // window, instead of placing two independent siblings on top of
+                // each other or stretching them across the screen.
+                Row {
+                    drawKeyboard(Alignment.Center, backdropEnabled, 0)
+                    drawKeyboard(Alignment.Center, false, 0)
+                }
+            } else {
+                drawKeyboard(keyboardPositionToAlignment(position), backdropEnabled, positionPadding)
+                if (position == KeyboardPosition.Dual) {
+                    drawKeyboard(keyboardPositionToAlignment(KeyboardPosition.Right), false, positionPadding)
+                }
             }
         }
 

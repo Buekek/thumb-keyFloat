@@ -29,14 +29,15 @@ internal class FloatingKeyboardOverlay(
     private val density = display.density
     private fun dp(value: Int) = (value * density).roundToInt()
 
-    // Keep just 4 dp of outer space per side on phones, instead of 12 dp.
-    private val windowWidth = minOf(display.widthPixels - dp(8), dp(420)).coerceAtLeast(dp(180))
-    val widthDp: Int = (windowWidth / density).roundToInt()
+    // The width is a limit for key scaling, NOT the actual overlay window width.
+    // The window measures its contents and follows changes to key size or layout.
+    private val maxWindowWidth = minOf(display.widthPixels - dp(8), dp(420)).coerceAtLeast(dp(180))
+    val widthDp: Int = (maxWindowWidth / density).roundToInt()
 
     private val preferences = ime.getSharedPreferences("floating_keyboard", Context.MODE_PRIVATE)
     private val params =
         WindowManager.LayoutParams(
-            windowWidth,
+            WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
@@ -49,8 +50,8 @@ internal class FloatingKeyboardOverlay(
             PixelFormat.TRANSLUCENT,
         ).apply {
             gravity = Gravity.TOP or Gravity.START
-            x = preferences.getInt("x", (display.widthPixels - windowWidth) / 2)
-                .coerceIn(0, (display.widthPixels - windowWidth).coerceAtLeast(0))
+            x = preferences.getInt("x", (display.widthPixels - maxWindowWidth) / 2)
+                .coerceIn(0, (display.widthPixels - maxWindowWidth).coerceAtLeast(0))
             y = preferences.getInt("y", display.heightPixels / 3)
                 .coerceIn(0, (display.heightPixels - dp(160)).coerceAtLeast(0))
         }
@@ -61,8 +62,30 @@ internal class FloatingKeyboardOverlay(
         elevation = dp(8).toFloat()
     }
     private var added = false
+    private var initialPlacementDone = false
 
     init {
+        // Compose requests a new layout when settings (including key size and dual mode)
+        // change. Since the window is WRAP_CONTENT, its touchable bounds shrink/grow
+        // with the keys, and the drag handle always matches the actual keyboard width.
+        root.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+            if (!added || root.width == 0 || root.height == 0) return@addOnLayoutChangeListener
+            val newX =
+                if (!initialPlacementDone && !preferences.contains("x")) {
+                    (display.widthPixels - root.width) / 2
+                } else {
+                    params.x
+                }.coerceIn(0, (display.widthPixels - root.width).coerceAtLeast(0))
+            initialPlacementDone = true
+            val newY = params.y.coerceIn(0, (display.heightPixels - root.height).coerceAtLeast(0))
+            if (newX != params.x || newY != params.y) {
+                params.x = newX
+                params.y = newY
+                root.post {
+                    if (added) windowManager.updateViewLayout(root, params)
+                }
+            }
+        }
         // A WindowManager overlay is an independent window, not a child of the IME's
         // decor view. Compose's WindowRecomposer looks for owners on the window root.
         root.setViewTreeLifecycleOwner(ime)
@@ -82,7 +105,7 @@ internal class FloatingKeyboardOverlay(
         root.addView(handle)
         root.addView(
             keyboardView,
-            LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT),
+            LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT),
         )
     }
 
@@ -103,7 +126,7 @@ internal class FloatingKeyboardOverlay(
                 }
                 MotionEvent.ACTION_MOVE -> {
                     params.x = (startX + event.rawX - touchX).roundToInt()
-                        .coerceIn(0, (display.widthPixels - windowWidth).coerceAtLeast(0))
+                        .coerceIn(0, (display.widthPixels - root.width).coerceAtLeast(0))
                     params.y = (startY + event.rawY - touchY).roundToInt()
                         .coerceIn(0, (display.heightPixels - root.height).coerceAtLeast(0))
                     if (added) windowManager.updateViewLayout(root, params)
