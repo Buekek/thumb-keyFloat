@@ -61,6 +61,7 @@
     <string name="min_swipe_length">Minimum swipe length: %1$s</string>
     <string name="animation_speed">Animation speed: %1$s</string>
     <string name="animation_helper_speed">Animation helper speed: %1$s</string>
+    <string name="long_press_duration">Long press duration: %1$s ms</string>
     <string name="slide_enable">Slide gestures</string>
     <string name="slide_cursor_movement_mode">Cursor movement mode</string>
     <string name="slide_sensitivity">Slide sensitivity: %1$s</string>

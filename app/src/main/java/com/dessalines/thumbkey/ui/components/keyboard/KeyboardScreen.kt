@@ -58,6 +58,7 @@ import com.dessalines.thumbkey.db.DEFAULT_KEY_HEIGHT
 import com.dessalines.thumbkey.db.DEFAULT_KEY_PADDING
 import com.dessalines.thumbkey.db.DEFAULT_KEY_RADIUS
 import com.dessalines.thumbkey.db.DEFAULT_KEY_WIDTH
+import com.dessalines.thumbkey.db.DEFAULT_LONG_PRESS_DURATION
 import com.dessalines.thumbkey.db.DEFAULT_MIN_SWIPE_LENGTH
 import com.dessalines.thumbkey.db.DEFAULT_NON_SQUARE_KEYS
 import com.dessalines.thumbkey.db.DEFAULT_POSITION
@@ -255,6 +256,7 @@ fun KeyboardScreen(
         CircularDragAction.entries[settings?.counterclockwiseDragAction ?: DEFAULT_COUNTERCLOCKWISE_DRAG_ACTION]
     val ghostKeysEnabled = (settings?.ghostKeysEnabled ?: DEFAULT_GHOST_KEYS_ENABLED).toBool()
     val slideHoldEnabled = (settings?.slideHoldEnabled ?: DEFAULT_SLIDE_HOLD_ENABLED).toBool()
+    val longPressDuration = (settings?.longPressDuration ?: DEFAULT_LONG_PRESS_DURATION).coerceIn(100, 1000)
 
     val keyBorderWidthFloat = keyBorderWidth / 10.0f
     val keyBorderColour = MaterialTheme.colorScheme.outline
@@ -491,6 +493,7 @@ fun KeyboardScreen(
                                     clockwiseDragAction = clockwiseDragAction,
                                     counterclockwiseDragAction = counterclockwiseDragAction,
                                     slideHoldEnabled = slideHoldEnabled,
+                                    longPressDuration = longPressDuration,
                                 )
                             }
                         }
@@ -700,6 +703,7 @@ fun KeyboardScreen(
                                     clockwiseDragAction = clockwiseDragAction,
                                     counterclockwiseDragAction = counterclockwiseDragAction,
                                     slideHoldEnabled = slideHoldEnabled,
+                                    longPressDuration = longPressDuration,
                                 )
                             }
                         }
@@ -915,6 +919,7 @@ fun KeyboardScreen(
                         clockwiseDragAction = clockwiseDragAction,
                         counterclockwiseDragAction = counterclockwiseDragAction,
                         slideHoldEnabled = slideHoldEnabled,
+                        longPressDuration = longPressDuration,
                         onSketchAction = onSketchAction,
                     )
                 }
@@ -1150,6 +1155,7 @@ fun KeyboardScreen(
                                         clockwiseDragAction = clockwiseDragAction,
                                         counterclockwiseDragAction = counterclockwiseDragAction,
                                         slideHoldEnabled = slideHoldEnabled,
+                                        longPressDuration = longPressDuration,
                                     )
                                 }
                             }
