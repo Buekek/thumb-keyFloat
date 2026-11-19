@@ -16,7 +16,7 @@
 
 <h3 align="center"><a href="https://github.com/dessalines/thumb-key">Thumb-Key</a></h3>
   <p align="center">
-    A privacy-conscious keyboard made for your thumbs
+    A privacy-conscious keyboard made for your thumbs now vibecoded to also float
     <br />
     <br />
     <a href="https://github.com/dessalines/thumb-key/issues">Report Bug</a>
@@ -92,6 +92,7 @@ This project is a follow-up to the now unmaintained (and closed-source) [MessagE
 ### Features
 
 - Highly configurable.
+- Floats to allow easy 1 handed typing on big screens.
 - Customizeable sizing, ThumbKey and MessagEase layouts, dynamic / Material v3 themes, animations, haptic feedback, and audio feedback.
 - Open-source, [AGPL License](/LICENSE).
 
